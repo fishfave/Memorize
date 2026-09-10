@@ -68,15 +68,11 @@ class RadialMenu {
       start = end;
     }
 
-    // fill(0);
-    // textAlign(CENTER, CENTER);
-    // textSize(20);
-    // text(this.options[this.selectedIndex], x, y);
   }
 
   // draws one wedge of a donut: an arc along the outside, then back along the inside
   drawDonutSegment(x, y, innerRad, outerRad, start, end) {
-    let resolution = 3; // vertices along the arc; raise for smoother curves on big segments
+    let resolution = 4; // vertices along the arc; raise for smoother curves on big segments
 
     beginShape();
     // outer edge, start -> end

@@ -42,9 +42,13 @@ function createWordButtons() {
         switchPage("Home");
       },
       {
-        cornerRadius: 8, textSize: 14,
-        bgColor: PALETTE.surface, hoverColor: PALETTE.surfaceRaised,
-        stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.ink,
+        cornerRadius: 8,
+        textSize: 14,
+        bgColor: PALETTE.surface,
+        hoverColor: PALETTE.surfaceRaised,
+        stroke: PALETTE.border,
+        strokeWeight: 1,
+        textColor: PALETTE.ink,
       }
     ),
   ];
@@ -99,9 +103,13 @@ function createWordButtons() {
             checkWord(word);
           },
           {
-            cornerRadius: 10, textSize: 17,
-            bgColor: PALETTE.surface, hoverColor: PALETTE.accentSoft,
-            stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.ink,
+            cornerRadius: 10,
+            textSize: 17,
+            bgColor: PALETTE.surface,
+            hoverColor: PALETTE.accentSoft,
+            stroke: PALETTE.border,
+            strokeWeight: 1,
+            textColor: PALETTE.ink,
           }
         )
       );
@@ -142,20 +150,36 @@ function endGame() {
         switchPage("Home");
       },
       {
-        cornerRadius: 8, textSize: 14,
-        bgColor: PALETTE.surface, hoverColor: PALETTE.surfaceRaised,
-        stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.ink,
+        cornerRadius: 8,
+        textSize: 14,
+        bgColor: PALETTE.surface,
+        hoverColor: PALETTE.surfaceRaised,
+        stroke: PALETTE.border,
+        strokeWeight: 1,
+        textColor: PALETTE.ink,
       }
     ),
   ];
   buttons.push(
-    new Button(width / 2, wordArea.y + wordArea.h / 2 + 18, 130, 40, "Try again", () => {
-      startMemorize();
-    }, {
-      cornerRadius: 10, textSize: 15,
-      bgColor: PALETTE.accentSoft, hoverColor: PALETTE.accent,
-      stroke: PALETTE.accent, strokeWeight: 1, textColor: PALETTE.ink,
-    })
+    new Button(
+      width / 2,
+      wordArea.y + wordArea.h / 2 + 18,
+      130,
+      40,
+      "Try again",
+      () => {
+        startMemorize();
+      },
+      {
+        cornerRadius: 10,
+        textSize: 15,
+        bgColor: PALETTE.accentSoft,
+        hoverColor: PALETTE.accent,
+        stroke: PALETTE.accent,
+        strokeWeight: 1,
+        textColor: PALETTE.ink,
+      }
+    )
   );
 }
 
@@ -177,24 +201,52 @@ let currentMode = "Reading";
 let buttons = [];
 
 const PALETTE = {
-  bg: [10, 12, 15],
-  divider: [40, 45, 51],
-  ink: [227, 230, 233],
-  wordColor: [227, 230, 233],
-  reference: [86, 197, 193],
-  menuBg: [19, 22, 26],
-  menuBgAlt: [23, 27, 32],
-  menuStroke: [40, 45, 51],
-  menuSelected: [40, 84, 83],
-  accentBg: [27, 31, 36],
-  accentHover: [37, 43, 49],
-  accent: [69, 179, 176],
-  accentSoft: [39, 110, 108],
-  textSecondary: [140, 148, 156],
-  surface: [19, 22, 26],
-  surfaceRaised: [27, 31, 36],
-  border: [40, 45, 51]
+  // background — sunlit surface fading into deep water
+  bgTop: [12, 100, 138],
+  bgBottom: [2, 12, 30],
+  bg: [2, 10, 24],
+
+  // text — pale sea-foam, stays fully opaque for legibility
+  ink: [236, 248, 250],
+  wordColor: [236, 248, 250],
+  textSecondary: [178, 214, 220],
+  reference: [240, 195, 120], // accent color
+
+  // glass panels — frosted white over the gradient, alpha is the 4th value
+  surface: [255, 255, 255, 22],
+  surfaceRaised: [255, 255, 255, 38],
+  border: [255, 255, 255, 55],
+  divider: [255, 255, 255, 40],
+
+  // radial menu glass
+  menuBg: [255, 255, 255, 20],
+  menuBgAlt: [255, 255, 255, 32],
+  menuStroke: [255, 255, 255, 55],
+  menuSelected: [240, 195, 120, 90],
+
+  // SAND!
+  accent: [240, 195, 120],
+  accentSoft: [240, 195, 120, 70],
+  accentBg: [240, 195, 120, 40],
+  accentHover: [240, 195, 120, 90],
 };
+
+let bubbleCount;
+let bubbles = [];
+
+function newBubble() {
+  return {
+    x: random(width),
+    y: random(height),
+    r: random(5, 20),
+    spd: random(0.2, 0.3),
+    noiseOffset: random(1000),
+  };
+}
+
+let rayCount = 10; // Number of visible rays
+let rays = [];
+let source;
 
 function setup() {
   buildIndex();
@@ -203,12 +255,119 @@ function setup() {
   setupMemorize();
   switchPage("Home");
   verseY = height / 2;
-  _buttonMode = CENTER;                 // CENTER or CORNER
-  _buttonTextAlign = [CENTER, CENTER]; 
+  _buttonMode = CENTER; // CENTER or CORNER
+  _buttonTextAlign = [CENTER, CENTER];
+  bubbleCount = floor(width/30)
+  for (let i = 0; i < bubbleCount; i++) {
+    let bubble = newBubble();
+    bubbles.push(bubble);
+  }
+  source = { x: 30, y: -200 };
+  for (let i = 0; i < rayCount; i++) {
+    let v = p5.Vector.random2D().setMag(random(5));
+    rays[i] = {
+      len: random(height/2, height + 200),
+      ang: random(40, 100),
+      x: v.x,
+      y: v.y,
+      w: random(10, 40),
+      noiseOffset: random(1000),
+    };
+  }
 }
 
 function draw() {
   background(...PALETTE.bg);
+  push();
+  linearGrad(0, 0, 0, height, PALETTE.bgTop, PALETTE.bgBottom);
+  rectMode(CORNER);
+  rect(0, 0, width, height);
+
+  fill(255, 0);
+  stroke(255, 100);
+  for (let bubble of bubbles) {
+    bubble.y -= bubble.r * bubble.spd;
+    bubble.x += map(
+      noise(bubble.x * 0.005, bubble.y * 0.005, bubble.r * 0.1),
+      0,
+      1,
+      -2,
+      2
+    );
+    if (bubble.y < 0) {
+      bubble.y = height + random(30);
+      bubble.x = random(width);
+      bubble.r = random(5, 20);
+    }
+    circle(bubble.x, bubble.y, bubble.r);
+  }
+  blendMode(ADD);
+  angleMode(DEGREES);
+  noStroke();
+  radGrad(
+    source.x,
+    source.y,
+    height,
+    color(250, 225, 180, 40),
+    color(200, 230, 250, 0)
+  );
+  circle(source.x, source.y, height*2);
+
+  for (let ray of rays) {
+    let startX = source.x + ray.x;
+    let startY = source.y + ray.y;
+    let angOffset = map(
+      noise(ray.noiseOffset + frameCount * 0.0005),
+      0,
+      1,
+      -20,
+      20
+    );
+    let lenOffset = map(
+      noise(ray.noiseOffset * 0.5 + frameCount * 0.01),
+      0,
+      1,
+      -200,
+      10
+    );
+    let len = ray.len + lenOffset;
+    let endX = cos(ray.ang + angOffset) * len + startX;
+    let endY = sin(ray.ang + angOffset) * len + startY;
+
+    let a = map(noise(ray.noiseOffset * 2 + frameCount * 0.01), 0, 1, 20, 50);
+    let w =
+      map(noise(ray.noiseOffset * 4 + frameCount * 0.006), 0, 1, -5, 5) + ray.w;
+    radGrad(
+      startX,
+      startY,
+      len,
+      color(255, 235, 200, a),
+      color(255, 235, 200, 0)
+    );
+    beginShape();
+    vertex(
+      startX + cos(ray.ang + angOffset + 90) * w * 0.3,
+      startY + sin(ray.ang + angOffset + 90) * w * 0.3
+    );
+    vertex(
+      startX + cos(ray.ang + angOffset - 90) * w * 0.3,
+      startY + sin(ray.ang + angOffset - 90) * w * 0.3
+    );
+
+    vertex(
+      endX + cos(ray.ang + angOffset - 90) * w,
+      endY + sin(ray.ang + angOffset - 90) * w
+    );
+    vertex(
+      endX + cos(ray.ang + angOffset + 90) * w,
+      endY + sin(ray.ang + angOffset + 90) * w
+    );
+    endShape(CLOSE);
+  }
+  blendMode(BLEND);
+  angleMode(RADIANS);
+  pop();
+  
 
   switch (state) {
     case "Home":
@@ -244,18 +403,29 @@ function buildHomeLayout() {
   const navH = 54;
   const nav1Y = cardY + cardH + 26;
   const nav2Y = nav1Y + navH;
-  const toggleW = 168, toggleH = 30;
+  const toggleW = 250,
+    toggleH = 30;
 
   homeLayout = {
     titleY,
     card: { x: marginX, y: cardY, w: cardW, h: cardH },
     nav: [
-      { y: nav1Y, h: navH, label: "New Verse", action: () => switchPage("Selecting") },
-      { y: nav2Y, h: navH, label: "Saved Verses", action: () => switchPage("Favorites") },
+      {
+        y: nav1Y,
+        h: navH,
+        label: "New Verse",
+        action: () => switchPage("Selecting"),
+      },
+      {
+        y: nav2Y,
+        h: navH,
+        label: "Saved Verses",
+        action: () => switchPage("Favorites"),
+      },
     ],
     navX: marginX,
     navW: cardW,
-    toggle: { x: width - marginX - toggleW, y: 24, w: toggleW, h: toggleH },
+    toggle: { x: width / 2 - toggleW / 2, y: 24, w: toggleW, h: toggleH },
   };
 }
 
@@ -283,7 +453,7 @@ function drawHome() {
   stroke(...PALETTE.border);
   strokeWeight(1);
   fill(...PALETTE.surface);
-  rect(c.x, c.y, c.w, c.h, 10);
+  rect(c.x, c.y, c.w, c.h, 0);
 
   noStroke();
   fill(...PALETTE.accent);
@@ -295,7 +465,8 @@ function drawHome() {
   textSize(12);
   text("Continue where you left off", c.x + 24, c.y + 14);
 
-  let ref = `${cBook} ${cChap}:${cVerse}` + (VC > 1 ? `\u2013${cVerse + VC - 1}` : "");
+  let ref =
+    `${cBook} ${cChap}:${cVerse}` + (VC > 1 ? `\u2013${cVerse + VC - 1}` : "");
   fill(...PALETTE.ink);
   textFont('Georgia, "Times New Roman", serif');
   textSize(19);
@@ -311,7 +482,12 @@ function drawHome() {
   stroke(...PALETTE.border);
   strokeWeight(1);
   for (const row of homeLayout.nav) {
-    line(homeLayout.navX, row.y + row.h, homeLayout.navX + homeLayout.navW, row.y + row.h);
+    line(
+      homeLayout.navX,
+      row.y + row.h,
+      homeLayout.navX + homeLayout.navW,
+      row.y + row.h
+    );
   }
   pop();
 }
@@ -359,6 +535,7 @@ function drawReading() {
 
 let gap = 20;
 let textLayout = [];
+let memorizeScrollY = 0;
 let textArea, backButtonM;
 function setupMemorize() {
   textArea = { x: gap, y: gap * 3 + 36, w: width - gap * 2, h: height * 0.6 };
@@ -402,7 +579,10 @@ function drawMemorize() {
   // Progress bar + counter
   let total = max(currentWordList.length, 1);
   let progress = currentWordIndex / total;
-  let barX = gap, barY = gap + 36 + 10, barW = (width - gap * 2) * 0.75, barH = 6;
+  let barX = gap,
+    barY = gap + 36 + 10,
+    barW = (width - gap * 2) * 0.75,
+    barH = 6;
   noStroke();
   fill(...PALETTE.border);
   rect(barX, barY, barW, barH, 3);
@@ -413,9 +593,16 @@ function drawMemorize() {
   textFont("Helvetica, Arial, sans-serif");
   textAlign(RIGHT, TOP);
   textSize(11);
-  text(`${currentWordIndex} / ${currentWordList.length}`, barX + barW, barY + 10);
+  text(
+    `${currentWordIndex} / ${currentWordList.length}`,
+    barX + barW,
+    barY + 10
+  );
 
-  if (currentWordList.length > 0 && currentWordIndex === currentWordList.length) {
+  if (
+    currentWordList.length > 0 &&
+    currentWordIndex === currentWordList.length
+  ) {
     noStroke();
     fill(...PALETTE.accent);
     textFont("Helvetica, Arial, sans-serif");
@@ -431,12 +618,24 @@ function drawMemorize() {
     fill(...PALETTE.ink);
     if (textLayout.length != correctWords.length) {
       updateLayout(correctWords);
-      console.log("Updating layout");
     }
 
+    // Clip to the box so long passages can't spill past its edges, and
+    // scroll so the most recently completed words stay in view.
+    drawingContext.save();
+    drawingContext.beginPath();
+    drawingContext.rect(textArea.x, textArea.y, textArea.w, textArea.h);
+    drawingContext.clip();
+
     for (let item of textLayout) {
-      text(item.word, item.x + textArea.x + gap, item.y + textArea.y + gap);
+      text(
+        item.word,
+        item.x + textArea.x + gap,
+        item.y + textArea.y + gap - memorizeScrollY
+      );
     }
+
+    drawingContext.restore();
   }
   pop();
 }
@@ -466,6 +665,12 @@ function updateLayout(list) {
 
     x += wWidth + spaceWidth;
   }
+
+  // Once the passage's total height exceeds the visible box, scroll up just
+  // enough to keep the latest line pinned near the bottom.
+  let visibleHeight = textArea.h - gap * 2;
+  let contentHeight = (row + 1) * lineHeight;
+  memorizeScrollY = max(0, contentHeight - visibleHeight);
 }
 function drawFavorites() {
   if (savedVerses.length === 0) {
@@ -484,15 +689,18 @@ function switchPage(newState) {
     for (const row of homeLayout.nav) {
       buttons.push(
         new Button(
-          homeLayout.navX, row.y, homeLayout.navW, row.h,
+          homeLayout.navX,
+          row.y,
+          homeLayout.navW,
+          row.h - 2,
           row.label,
           row.action,
           {
             mode: CORNER,
             cornerRadius: 6,
             strokeWeight: 0,
-            bgColor: PALETTE.bg,
-            hoverColor: PALETTE.surface,
+            bgColor: PALETTE.surface,
+            hoverColor: PALETTE.surfaceRaised,
             textColor: PALETTE.ink,
             textAlign: [LEFT, CENTER],
             textSize: 17,
@@ -511,22 +719,38 @@ function switchPage(newState) {
       stroke: PALETTE.border,
       textSize: 12,
       bgColor: currentMode === mode ? PALETTE.accentSoft : PALETTE.surface,
-      hoverColor: currentMode === mode ? PALETTE.accentSoft : PALETTE.surfaceRaised,
+      hoverColor:
+        currentMode === mode ? PALETTE.accentSoft : PALETTE.surfaceRaised,
       textColor: currentMode === mode ? PALETTE.ink : PALETTE.textSecondary,
     });
     buttons.push(
-      new Button(t.x, t.y, halfW, t.h, "Reading", () => {
-        currentMode = "Reading";
-        switchPage("Home");
-      }, segStyle("Reading"))
+      new Button(
+        t.x,
+        t.y,
+        halfW,
+        t.h,
+        "Reading",
+        () => {
+          currentMode = "Reading";
+          switchPage("Home");
+        },
+        segStyle("Reading")
+      )
     );
     buttons.push(
-      new Button(t.x + halfW, t.y, halfW, t.h, "Memorize", () => {
-        currentMode = "Memorize";
-        switchPage("Home");
-      }, segStyle("Memorize"))
+      new Button(
+        t.x + halfW,
+        t.y,
+        halfW,
+        t.h,
+        "Memorize",
+        () => {
+          currentMode = "Memorize";
+          switchPage("Home");
+        },
+        segStyle("Memorize")
+      )
     );
-
   } else if (newState === "Selecting") {
     getNewMenu();
     state = newState;
@@ -535,38 +759,86 @@ function switchPage(newState) {
     verseY = height / 2;
     state = newState;
     buttons = [
-      new Button(64, 26, 96, 34, "\u2039 Back", () => {
-        switchPage("Home");
-      }, {
-        cornerRadius: 8, textSize: 14,
-        bgColor: PALETTE.surface, hoverColor: PALETTE.surfaceRaised,
-        stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.ink,
-      }),
-      new Button(width - 46, 26, 76, 34, "Save", () => {
-        saveCurrentVerse();
-        buttons[1].label = "Saved";
-        buttons[1].style.bgColor = PALETTE.accentSoft;
-        buttons[1].style.hoverColor = PALETTE.accentSoft;
-        buttons[1].style.textColor = PALETTE.ink;
-      }, {
-        cornerRadius: 8, textSize: 14,
-        bgColor: PALETTE.surface, hoverColor: PALETTE.surfaceRaised,
-        stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.ink,
-      }),
-      new Button(46, height - 44, 44, 44, "\u2039", () => {
-        goToPrevRange();
-      }, {
-        cornerRadius: 22, textSize: 20,
-        bgColor: PALETTE.surface, hoverColor: PALETTE.accentSoft,
-        stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.accent,
-      }),
-      new Button(width - 46, height - 44, 44, 44, "\u203A", () => {
-        goToNextRange();
-      }, {
-        cornerRadius: 22, textSize: 20,
-        bgColor: PALETTE.surface, hoverColor: PALETTE.accentSoft,
-        stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.accent,
-      }),
+      new Button(
+        64,
+        26,
+        96,
+        34,
+        "\u2039 Back",
+        () => {
+          switchPage("Home");
+        },
+        {
+          cornerRadius: 8,
+          textSize: 14,
+          bgColor: PALETTE.surface,
+          hoverColor: PALETTE.surfaceRaised,
+          stroke: PALETTE.border,
+          strokeWeight: 1,
+          textColor: PALETTE.ink,
+        }
+      ),
+      new Button(
+        width - 46,
+        26,
+        76,
+        34,
+        "Save",
+        () => {
+          saveCurrentVerse();
+          buttons[1].label = "Saved";
+          buttons[1].style.bgColor = PALETTE.accentSoft;
+          buttons[1].style.hoverColor = PALETTE.accentSoft;
+          buttons[1].style.textColor = PALETTE.ink;
+        },
+        {
+          cornerRadius: 8,
+          textSize: 14,
+          bgColor: PALETTE.surface,
+          hoverColor: PALETTE.surfaceRaised,
+          stroke: PALETTE.border,
+          strokeWeight: 1,
+          textColor: PALETTE.ink,
+        }
+      ),
+      new Button(
+        46,
+        height - 44,
+        44,
+        44,
+        "\u2039",
+        () => {
+          goToPrevRange();
+        },
+        {
+          cornerRadius: 22,
+          textSize: 20,
+          bgColor: PALETTE.surface,
+          hoverColor: PALETTE.accentSoft,
+          stroke: PALETTE.border,
+          strokeWeight: 1,
+          textColor: PALETTE.accent,
+        }
+      ),
+      new Button(
+        width - 46,
+        height - 44,
+        44,
+        44,
+        "\u203A",
+        () => {
+          goToNextRange();
+        },
+        {
+          cornerRadius: 22,
+          textSize: 20,
+          bgColor: PALETTE.surface,
+          hoverColor: PALETTE.accentSoft,
+          stroke: PALETTE.border,
+          strokeWeight: 1,
+          textColor: PALETTE.accent,
+        }
+      ),
     ];
   } else if (newState === "Memorize") {
     state = newState;
@@ -620,7 +892,12 @@ function mouseClicked() {
 
 function clickHome() {
   const c = homeLayout.card;
-  if (mouseX > c.x && mouseX < c.x + c.w && mouseY > c.y && mouseY < c.y + c.h) {
+  if (
+    mouseX > c.x &&
+    mouseX < c.x + c.w &&
+    mouseY > c.y &&
+    mouseY < c.y + c.h
+  ) {
     switchPage(currentMode);
   }
 }
@@ -909,7 +1186,12 @@ function displayVerse(b, c, sv, lv = sv) {
   textFont('Georgia, "Times New Roman", serif');
   textStyle(NORMAL);
   textSize(20);
+  drawingContext.save(); // save context state
+  drawingContext.beginPath();
+  drawingContext.rect(28, 74, width - 56, height - 74 - 74, 14); // x, y, w, h
+  drawingContext.clip();
   text(verseText, width / 2, verseY, 0.8 * width);
+  drawingContext.restore();
 }
 
 //=====================================================================
@@ -1006,4 +1288,19 @@ function bookNumberToName(num) {
 
 function bookNameToNumber(name) {
   return nameToNumber[name.toLowerCase()];
+}
+
+//========= grad ======
+function linearGrad(x1, y1, x2, y2, c1, c2) {
+  let grd = drawingContext.createLinearGradient(x1, y1, x2, y2);
+  grd.addColorStop(0, color(...c1));
+  grd.addColorStop(1, color(...c2));
+  drawingContext.fillStyle = grd;
+}
+
+function radGrad(x, y, r, c1, c2) {
+  let grd = drawingContext.createRadialGradient(x, y, 0, x, y, r);
+  grd.addColorStop(0, color(c1));
+  grd.addColorStop(1, color(c2));
+  drawingContext.fillStyle = grd;
 }
