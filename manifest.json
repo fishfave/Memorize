@@ -1,13 +1,13 @@
 {
-  "name": "Memorize",
-  "short_name": "Memorize",
+  "name": "Anchored",
+  "short_name": "Anchored",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "description": "A simple web app to help you memorize Bible verses.",
+  "description": "For where your treasure is, there your heart will be also.",
   "icons": [
     {
       "src": "icons/icon-192.png",

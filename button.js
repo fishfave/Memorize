@@ -38,9 +38,16 @@ class Button {
       strokeWeight: 2,
       cornerRadius: 4,
       mode: null,       // override buttonMode() for this instance
-      textAlign: null   // override buttonTextAlign() for this instance
+      textAlign: null,   // override buttonTextAlign() for this instance
+
+      behaviors: []
     };
     this.style = { ...this.default, ...options };
+
+    // Each factory runs ONCE here, closing over `this` (the button)
+    // plus whatever private variables it declares internally.
+    // The returned function is what actually runs on each behave() call.
+    this.behaviors = this.style.behaviors.map(factory => factory(this));
   }
 
   contains(px, py) {
@@ -84,7 +91,39 @@ class Button {
     pop();
   }
 
+  behave() {
+    for (const run of this.behaviors) {
+      run();
+    }
+  }
+
   handleClick(px = mouseX, py = mouseY) {
     if (this.contains(px, py)) this.onClick();
+  }
+}
+
+//Behavior Factories
+
+function wobble({ speed = 0.1, distance = 5} = {}) {
+  return function attachTo(btn) {
+    let angle = 0;
+    return function runWobble() {
+      angle += speed;
+      btn.x += Math.sin(angle) * distance;
+    };
+  }
+}
+
+function springX({ targetX, speed = 0.1, damping = 0.8 } = {}) {
+  return function attachTo(btn) {
+    let vx = 0;
+    return function runSpringX() {
+      const dx = targetX - btn.x;
+      if(abs(dx) > 0.1 || abs(vx) > 0.1) {
+        vx += dx * speed;
+        vx *= damping;
+        btn.x += vx;
+      }
+    };
   }
 }
