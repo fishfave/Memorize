@@ -935,8 +935,6 @@ function switchPage(newState) {
 //=============================================================
 //       clicking
 //=============================================================
-
-function mouseClicked() {
 function mouseClicked() {
   handleAllClicks(mouseX, mouseY);
 }
