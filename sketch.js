@@ -937,6 +937,23 @@ function switchPage(newState) {
 //=============================================================
 
 function mouseClicked() {
+function mouseClicked() {
+  handleAllClicks(mouseX, mouseY);
+}
+
+function touchStarted() {
+  return false; // block iOS ghost-clicks / double-tap zoom
+}
+
+function touchEnded() {
+  if (touches.length === 0 && typeof winMouseX !== "undefined") {
+    // use last known touch position since `touches` is already empty here
+    handleAllClicks(mouseX, mouseY);
+  }
+  return false;
+}
+
+function handleAllClicks(px, py) {
   if (state === "Home") {
     clickHome();
   } else if (state === "Selecting") {
@@ -947,8 +964,16 @@ function mouseClicked() {
     clickMemorize();
   }
   for (let btn of buttons) {
-    btn.handleClick();
+    btn.handleClick(px, py);
   }
+}
+
+
+function touchMoved() {
+  for (let btn of buttons) {
+    btn.update();
+  }
+  return false;
 }
 
 function clickHome() {
