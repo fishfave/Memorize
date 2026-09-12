@@ -1,6 +1,6 @@
 // Bump this version string any time you change the file list below,
 // so browsers know to fetch a fresh copy of everything.
-const CACHE_NAME = 'p5-sketch-cache-v3.2';
+const CACHE_NAME = 'p5-sketch-cache-v3.3';
 
 // Add/remove paths here to match your actual project structure.
 // Paths are relative to the location of this sw.js file.
