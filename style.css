@@ -13,8 +13,19 @@ html, body {
   margin: 0;
   padding: 0;
   background: var(--bg);
+  touch-action: none; /* also stop page-level bounce/scroll/zoom */
+  overscroll-behavior: none;
 }
 canvas {
   display: block;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
+
+body {
+  touch-action: none; /* also stop page-level bounce/scroll/zoom */
+  overscroll-behavior: none;
+}

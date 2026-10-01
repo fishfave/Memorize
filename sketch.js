@@ -157,7 +157,7 @@ bookNames.forEach((name, i) => {
 // Background water/bubble/light-ray effect
 let bubbleCount;
 let bubbles = [];
-let rayCount = 40; // Number of visible rays
+let rayCount = 30; // Number of visible rays
 let rays = [];
 let source;
 
@@ -174,7 +174,7 @@ function setup() {
   verseY = height / 2;
   _buttonMode = CENTER; // CENTER or CORNER
   _buttonTextAlign = [CENTER, CENTER];
-  bubbleCount = floor(width/60)
+  bubbleCount = floor(width/80)
   for (let i = 0; i < bubbleCount; i++) {
     let bubble = newBubble();
     bubbles.push(bubble);
@@ -226,7 +226,7 @@ function newBubble() {
     x: random(width),
     y: random(height),
     r: random(5, 20),
-    spd: random(0.2, 0.3),
+    spd: random(0.1, 0.2),
     noiseOffset: random(1000),
   };
 }
@@ -1018,10 +1018,24 @@ function getWordList(string) {
   return _arr;
 }
 
+function stripWord(w) {
+  return w.toLowerCase().replace(/[^\p{L}\p{N}']/gu, "");
+}
+
 function getWordSet(arr, index, setSize) {
-  let count = min(setSize, arr.length);
   const chosen = arr[index];
-  const rest = arr.filter((_, i) => i !== index);
+  const seen = [stripWord(chosen)];
+
+  // filter out the chosen word and any duplicates of each other
+  const rest = arr.filter((w, i) => {
+    if (i === index) return false;
+    const n = stripWord(w);
+    if (seen.includes(n)) return false;
+    seen.push(n);
+    return true;
+  });
+
+  const count = min(setSize, rest.length + 1); // +1 for chosen
 
   // shuffle
   for (let i = rest.length - 1; i > 0; i--) {
@@ -1030,8 +1044,8 @@ function getWordSet(arr, index, setSize) {
   }
 
   const _set = rest.slice(0, count - 1);
-  const insertAt = floor(random(_set.length + 1));
-  _set.splice(insertAt, 0, chosen);
+  _set.push(chosen);
+  _set.sort((a, b) => a.localeCompare(b));
 
   return _set;
 }
@@ -1185,7 +1199,7 @@ function createWordButtons() {
             strokeWeight: 1,
             textColor: PALETTE.ink,
             behaviors: [
-              springX({targetX: x + buttonW / 2, speed: 0.8, damping: 0.90})
+              springX({targetX: x + buttonW / 2, speed: 0.6, damping: 0.90})
             ]
           }
         )
@@ -1329,12 +1343,18 @@ function drawMemorize() {
 
   if (currentWordIndex > 0) {
     let correctWords = currentWordList.slice(0, currentWordIndex);
+    if (currentWordList[currentWordIndex]) {
+      const nextWordLength = currentWordList[currentWordIndex].length;
+      let blank = "_".repeat(nextWordLength);
+      correctWords.push(blank);
+    }
     textAlign(LEFT, TOP);
     textSize(readingTextSize);
     fill(...PALETTE.ink);
-    if (textLayout.length != correctWords.length) {
+    if (textLayout.length != correctWords.length || textLayout[textLayout.length - 1].word != correctWords[correctWords.length - 1]) {
       updateLayout(correctWords);
     }
+    // to do change
 
     // Clip to the box so long passages can't spill past its edges, and
     // scroll so the most recently completed words stay in view.
