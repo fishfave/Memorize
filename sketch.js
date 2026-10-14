@@ -19,6 +19,8 @@ const PALETTE = {
   surfaceRaised: [255, 255, 255, 38],
   border: [255, 255, 255, 55],
   divider: [255, 255, 255, 40],
+  tabFill: [255, 255, 255, 40],
+  tabSelectedFill: [255, 255, 255, 120],
 
   // radial menu glass
   menuBg: [255, 255, 255, 20],
@@ -52,6 +54,9 @@ let cBook = "Genesis",
 let verseY;
 let offsetY = 0;
 let dragging = true;
+let tabHeight = 32;
+let tabs = [];
+let currentTabIndex = 0;
 
 // Shared text size for Reading + Memorize passage text
 let readingTextSize = 20;
@@ -149,10 +154,83 @@ const bookNames = [
   "Revelation",
 ];
 
+const shortBookNames = [
+  "Gen",
+  "Exod",
+  "Lev",
+  "Num",
+  "Deut",
+  "Josh",
+  "Judg",
+  "Ruth",
+  "1 Sam",
+  "2 Sam",
+  "1 Kgs",
+  "2 Kgs",
+  "1 Chr",
+  "2 Chr",
+  "Ezra",
+  "Neh",
+  "Esth",
+  "Job",
+  "Ps",
+  "Prov",
+  "Eccl",
+  "Song",
+  "Isa",
+  "Jer",
+  "Lam",
+  "Ezek",
+  "Dan",
+  "Hos",
+  "Joel",
+  "Amos",
+  "Obad",
+  "Jonah",
+  "Mic",
+  "Nah",
+  "Hab",
+  "Zeph",
+  "Hag",
+  "Zech",
+  "Mal",
+  "Matt",
+  "Mark",
+  "Luke",
+  "John",
+  "Acts",
+  "Rom",
+  "1 Cor",
+  "2 Cor",
+  "Gal",
+  "Eph",
+  "Phil",
+  "Col",
+  "1 Thess",
+  "2 Thess",
+  "1 Tim",
+  "2 Tim",
+  "Titus",
+  "Phlm",
+  "Heb",
+  "Jas",
+  "1 Pet",
+  "2 Pet",
+  "1 John",
+  "2 John",
+  "3 John",
+  "Jude",
+  "Rev",
+];
+
 const nameToNumber = {};
 bookNames.forEach((name, i) => {
   nameToNumber[name.toLowerCase()] = i + 1; // book numbers are 1-indexed
 });
+
+const shortNameByBook = new Map(
+  bookNames.map((name, i) => [name, shortBookNames[i]])
+);
 
 // Background water/bubble/light-ray effect
 let bubbleCount;
@@ -174,17 +252,17 @@ function setup() {
   verseY = height / 2;
   _buttonMode = CENTER; // CENTER or CORNER
   _buttonTextAlign = [CENTER, CENTER];
-  bubbleCount = floor(width/80)
+  bubbleCount = floor(width / 80)
   for (let i = 0; i < bubbleCount; i++) {
     let bubble = newBubble();
     bubbles.push(bubble);
   }
   source = { x: -10, y: -130 };
-    for (let i = 0; i < rayCount; i++) {
+  for (let i = 0; i < rayCount; i++) {
     let v = p5.Vector.random2D().setMag(random(5));
     rays[i] = {
       len: random(height / 2 + 130, height + 130),
-      ang: random(10,90),
+      ang: random(10, 90),
       x: v.x,
       y: v.y,
       w: random(10, 40),
@@ -192,7 +270,7 @@ function setup() {
       gradCache: new Map(), // reused CanvasGradients, keyed by quantized (len, alpha)
     };
   }
- 
+
 }
 
 function setupMemorize() {
@@ -270,43 +348,43 @@ function draw() {
     }
     circle(bubble.x, bubble.y, bubble.r);
   }
-    blendMode(ADD);
+  blendMode(ADD);
   angleMode(DEGREES)
-  stroke(0,0)
+  stroke(0, 0)
   radGrad(source.x, source.y, height, 'rgba(250,250,250,0.157)', 'rgba(200,230,250,0)');
-  circle(source.x, source.y, height*2);
- 
+  circle(source.x, source.y, height * 2);
+
   const fc0005 = frameCount * 0.0005;
   const fc01 = frameCount * 0.01;
   const fc006 = frameCount * 0.006;
- 
+
   for (let i = 0; i < rayCount; i++) {
     const ray = rays[i];
     const startX = source.x + ray.x;
     const startY = source.y + ray.y;
- 
+
     const angOffset = -20 + noise(ray.noiseOffset + fc0005) * 40;
     const lenOffset = -200 + noise(ray.noiseOffset * 0.5 + fc01) * 210;
     const len = ray.len + lenOffset;
- 
+
     const ang = ray.ang + angOffset;
     const cosA = cos(ang);
     const sinA = sin(ang);
- 
+
     const endX = cosA * len + startX;
     const endY = sinA * len + startY;
- 
+
     const a = 13 + noise(ray.noiseOffset * 2 + fc01) * 20;
     const w = (-5 + noise(ray.noiseOffset * 4 + fc006) * 10) + ray.w;
- 
+
     // cos/sin of ang±90 derived from cosA/sinA via trig identities:
     // cos(ang+90) = -sin(ang), sin(ang+90) = cos(ang)
     // cos(ang-90) =  sin(ang), sin(ang-90) = -cos(ang)
     const cosP = -sinA, sinP = cosA;
-    const cosM =  sinA, sinM = -cosA;
- 
+    const cosM = sinA, sinM = -cosA;
+
     cachedRadGrad(ray, startX, startY, len, a);
- 
+
     beginShape();
     vertex(startX + cosP * w * 0.3, startY + sinP * w * 0.3);
     vertex(startX + cosM * w * 0.3, startY + sinM * w * 0.3);
@@ -317,7 +395,7 @@ function draw() {
   blendMode(BLEND);
   angleMode(RADIANS)
   pop();
-  
+
 
   switch (state) {
     case "Home":
@@ -464,8 +542,20 @@ function switchPage(newState) {
   } else if (newState === "Reading") {
     verseY = height / 2;
     state = newState;
+    const index = tabs.findIndex(o =>
+      o.book === cBook &&
+      o.chap === cChap &&
+      o.verse === cVerse
+    );
 
-    //  rect(28, 74, width - 56, height - 74 - 74, 14); text card
+    if (index === -1) {
+      // not in the array
+      addVerseTab(cBook, cChap, cVerse, VC);
+      currentTabIndex = tabs.length - 1;
+    } else {
+      // found at arr[index]
+      currentTabIndex = index;
+    }
 
     buttons = [
       new Button(
@@ -488,10 +578,10 @@ function switchPage(newState) {
         }
       ),
       new Button(
-        width - 46,
-        26,
+        width - 40,
+        20,
         76,
-        34,
+        25,
         "Save",
         () => {
           saveCurrentVerse();
@@ -511,13 +601,32 @@ function switchPage(newState) {
         }
       ),
       new Button(
+        width - 40,
+        56,
+        76,
+        25,
+        "Close Tab",
+        () => {
+          closeTab(currentTabIndex);
+        },
+        {
+          cornerRadius: 8,
+          textSize: 14,
+          bgColor: PALETTE.surface,
+          hoverColor: PALETTE.surfaceRaised,
+          stroke: PALETTE.border,
+          strokeWeight: 1,
+          textColor: PALETTE.ink,
+        }
+      ),
+      new Button(
         46,
         height - 44,
         44,
         44,
         "\u2039",
         () => {
-          goToPrevRange();
+          goToPrevVerse();
         },
         {
           cornerRadius: 22,
@@ -536,7 +645,7 @@ function switchPage(newState) {
         44,
         "\u203A",
         () => {
-          goToNextRange();
+          goToNextVerse();
         },
         {
           cornerRadius: 22,
@@ -549,7 +658,7 @@ function switchPage(newState) {
         }
       ),
       new Button(
-        width/2,
+        width / 2,
         height - 44,
         98,
         44,
@@ -570,7 +679,7 @@ function switchPage(newState) {
       ),
       new Button(
         28 + 25,
-        74 + 25,
+        74 + 25 + tabHeight,
         50,
         50,
         "+",
@@ -588,7 +697,7 @@ function switchPage(newState) {
       ),
       new Button(
         width - 28 - 25,
-        74 + 25,
+        74 + 25 + tabHeight,
         50,
         50,
         "-",
@@ -606,6 +715,18 @@ function switchPage(newState) {
         }
       ),
     ];
+    // In switchPage("Reading"), add these to the buttons array:
+    const vcBtnStyle = {
+      mode: CENTER, cornerRadius: 16, textSize: 18,
+      bgColor: PALETTE.surface, hoverColor: PALETTE.accentSoft,
+      stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.accent,
+    };
+    const vcY = height - 74 - 8 - 16;          // 8px above the panel's bottom edge
+    const vcRight = width - 28 - 12 - 16;      // 12px in from the panel's right edge
+    buttons.push(
+      new Button(vcRight - 80, vcY, 32, 32, "\u2212", () => changeVC(-1), vcBtnStyle),
+      new Button(vcRight, vcY, 32, 32, "+", () => changeVC(1), vcBtnStyle)
+    );
   } else if (newState === "Memorize") {
     state = newState;
     startMemorize();
@@ -688,7 +809,7 @@ function buildHomeLayout() {
     ],
     navX: marginX,
     navW: cardW,
-    toggle: { x: width / 2 - toggleW / 2, y: height -24 - toggleH, w: toggleW, h: toggleH },
+    toggle: { x: width / 2 - toggleW / 2, y: height - 24 - toggleH, w: toggleW, h: toggleH },
   };
 }
 
@@ -810,9 +931,9 @@ function drawSelecting() {
 }
 
 function clickSelecting() {
-  if(mouseY > height/2 - menu.outerRad &&
-     mouseY < height/2 + menu.outerRad
-    ){
+  if (mouseY > height / 2 - menu.outerRad &&
+    mouseY < height / 2 + menu.outerRad
+  ) {
     menu.handleClick();
   }
 }
@@ -845,12 +966,12 @@ function getNewMenu() {
   });
 }
 
-function menuBack(){
-  if(selecting == "Book"){
+function menuBack() {
+  if (selecting == "Book") {
     switchPage("Home");
-  } else if(selecting == "Chapter"){
+  } else if (selecting == "Chapter") {
     getNewMenu();
-  } else if(selecting == "Start Verse"){
+  } else if (selecting == "Start Verse") {
     selecting = "Chapter";
     menu = new RadialMenu(Object.keys(bible[bookNameToNumber(cBook)]), (n2) => {
       setChapter(n2);
@@ -872,24 +993,24 @@ function menuBack(){
         }
       );
     });
-  } else if(selecting == "End Verse"){
+  } else if (selecting == "End Verse") {
     selecting = "Start Verse";
-      menu = new RadialMenu(
-        Object.keys(bible[bookNameToNumber(cBook)][cChap]),
-        (n3) => {
-          setVerse(n3);
-          selecting = "End Verse";
-          let count =
-            Object.keys(bible[bookNameToNumber(cBook)][cChap]).length +
-            1 -
-            cVerse;
-          let tempList = [...Array(count).keys()].map((i) => i + 1);
-          menu = new RadialMenu(tempList, (n4) => {
-            VC = n4;
-            switchPage(currentMode);
-          });
-        }
-      );
+    menu = new RadialMenu(
+      Object.keys(bible[bookNameToNumber(cBook)][cChap]),
+      (n3) => {
+        setVerse(n3);
+        selecting = "End Verse";
+        let count =
+          Object.keys(bible[bookNameToNumber(cBook)][cChap]).length +
+          1 -
+          cVerse;
+        let tempList = [...Array(count).keys()].map((i) => i + 1);
+        menu = new RadialMenu(tempList, (n4) => {
+          VC = n4;
+          switchPage(currentMode);
+        });
+      }
+    );
   }
 }
 
@@ -899,9 +1020,90 @@ function menuBack(){
 
 function drawReading() {
   displayVerse(cBook, cChap, cVerse, cVerse + VC - 1);
+  displayTabs();
+    // VC label, centered between the − and + buttons
+  push();
+  noStroke();
+  fill(...PALETTE.ink);
+  textFont("Helvetica, Arial, sans-serif");
+  textSize(14);
+  textAlign(CENTER, CENTER);
+  text(VC, width - 28 - 12 - 16 - 40, height - 74 - 8 - 16);
+  pop();
 }
 
-function clickReading() {}
+function clickReading() {
+  if (mouseY > 74 && mouseY < 74 + tabHeight && mouseX > 40 && mouseX < width - 40) {
+    currentTabIndex = floor((mouseX - 40) / (width - 80) * tabs.length);
+    if (tabs[currentTabIndex]) {
+      setCurrentVerse(tabs[currentTabIndex]);
+      verseY = height / 2
+    }
+    
+  }
+
+  if (mouseY < 74 && mouseX > 165 && mouseX < width - 121) {
+    switchPage("Selecting")
+    selecting = "End Verse"
+    menuBack();
+  }
+}
+
+let tabStart = 40;
+let minTabWidth = 10;
+let tabWidth;
+
+function displayTabs() {
+
+  push();
+  rectMode(CORNER)
+  textFont("Helvetica, Arial, sans-serif");
+  textStyle(BOLD);
+  textSize(15);
+  textAlign(CENTER, CENTER);
+
+  for (let i = 0; i < tabs.length; i++) {
+    if (i === currentTabIndex) {
+      fill(...PALETTE.tabSelectedFill);
+    } else {
+      fill(...PALETTE.tabFill);
+    }
+    stroke(...PALETTE.border);
+    rect(tabStart + i * tabWidth, 74, tabWidth, tabHeight, 10, 10, 0, 0);
+    noStroke();
+    fill(...PALETTE.reference);
+    let label = `${bookNameToShortName(tabs[i].book)} ${tabs[i].chap}: ${tabs[i].verse}`
+    if (textWidth(label) > tabWidth) {
+      label = `${bookNameToShortName(tabs[i].book)} ${tabs[i].chap}`
+    }
+    if (textWidth(label) > tabWidth) {
+      label = `${bookNameToShortName(tabs[i].book)}`
+    }
+    text(label, tabStart + tabWidth / 2 + tabWidth * i, 74 + tabHeight / 2);
+  }
+  pop();
+}
+
+function addVerseTab(book, chapter, verse, vc) {
+  let ref = {
+    book: book,
+    chap: chapter,
+    verse: verse,
+    vc: vc
+  }
+  tabs.push(ref);
+  tabWidth = max((width - 80) / tabs.length, minTabWidth);
+}
+
+function closeTab() {
+  tabs.splice(currentTabIndex, 1);
+  tabWidth = max((width - 80) / tabs.length, minTabWidth);
+  if (currentTabIndex != 0) currentTabIndex--;
+  if (tabs[currentTabIndex]) setCurrentVerse(tabs[currentTabIndex]);
+  if (tabs.length === 0) {
+    switchPage("Home");
+  }
+}
 
 function displayVerse(b, c, sv, lv = sv) {
   let ref = b + " " + c + ": " + sv;
@@ -923,7 +1125,7 @@ function displayVerse(b, c, sv, lv = sv) {
   stroke(...PALETTE.border);
   strokeWeight(1);
   fill(...PALETTE.surface);
-  rect(28, 74, width - 56, height - 74 - 74, 14);
+  rect(28, 74 + tabHeight, width - 56, height - 74 - 74 - tabHeight, 14);
   pop();
 
   noStroke();
@@ -950,57 +1152,69 @@ function displayVerse(b, c, sv, lv = sv) {
   drawingContext.restore();
 }
 
-function goToNextRange() {
-  let bookNum = bookNameToNumber(cBook);
-  let chapterVerseCount = Object.keys(bible[bookNum][cChap]).length;
-  let nextStart = cVerse + VC;
+function goToNextVerse() {
+  const bookNum = bookNameToNumber(cBook);
+  const chapterVerseCount = Object.keys(bible[bookNum][cChap]).length;
 
-  if (nextStart <= chapterVerseCount) {
-    cVerse = nextStart;
+  if (cVerse < chapterVerseCount) {
+    cVerse++;
   } else {
-    let chapters = Object.keys(bible[bookNum]).map(Number);
-    let maxChapter = max(chapters);
-    if (cChap < maxChapter) {
+    const chapters = Object.keys(bible[bookNum]).map(Number);
+    if (cChap < max(chapters)) {
       cChap++;
       cVerse = 1;
     } else {
-      let bookNumbers = Object.keys(bible).map(Number);
-      let idx = bookNumbers.indexOf(bookNum);
+      const bookNumbers = Object.keys(bible).map(Number);
+      const idx = bookNumbers.indexOf(bookNum);
       if (idx < bookNumbers.length - 1) {
-        bookNum = bookNumbers[idx + 1];
-        cBook = bookNumberToName(bookNum);
+        cBook = bookNumberToName(bookNumbers[idx + 1]);
         cChap = 1;
         cVerse = 1;
       }
     }
   }
-  verseY = height / 2;
+  clampVC();
+  finishMove();
 }
 
-function goToPrevRange() {
-  let bookNum = bookNameToNumber(cBook);
-  let prevStart = cVerse - VC;
+function goToPrevVerse() {
+  const bookNum = bookNameToNumber(cBook);
 
-  if (prevStart >= 1) {
-    cVerse = prevStart;
+  if (cVerse > 1) {
+    cVerse--;
   } else if (cChap > 1) {
     cChap--;
-    let chapterVerseCount = Object.keys(bible[bookNum][cChap]).length;
-    cVerse = max(1, chapterVerseCount - VC + 1);
+    cVerse = Object.keys(bible[bookNum][cChap]).length;
   } else {
-    let bookNumbers = Object.keys(bible).map(Number);
-    let idx = bookNumbers.indexOf(bookNum);
+    const bookNumbers = Object.keys(bible).map(Number);
+    const idx = bookNumbers.indexOf(bookNum);
     if (idx > 0) {
-      bookNum = bookNumbers[idx - 1];
-      cBook = bookNumberToName(bookNum);
-      let chapters = Object.keys(bible[bookNum]).map(Number);
-      cChap = max(chapters);
-      let chapterVerseCount = Object.keys(bible[bookNum][cChap]).length;
-      cVerse = max(1, chapterVerseCount - VC + 1);
+      const prevBook = bookNumbers[idx - 1];
+      cBook = bookNumberToName(prevBook);
+      cChap = max(Object.keys(bible[prevBook]).map(Number));
+      cVerse = Object.keys(bible[prevBook][cChap]).length;
     }
   }
+  clampVC();
+  finishMove();
+}
+
+// Keeps the passage from running past the end of the chapter
+function clampVC() {
+  const chapterVerseCount = Object.keys(bible[bookNameToNumber(cBook)][cChap]).length;
+  VC = constrain(VC, 1, chapterVerseCount - cVerse + 1);
+}
+
+function changeVC(delta) {
+  VC += delta;
+  clampVC();
+  finishMove();
+}
+
+function finishMove() {
   verseY = height / 2;
 }
+
 
 function setCurrentVerse(ref) {
   cBook = ref.book;
@@ -1080,7 +1294,7 @@ function createWordButtons() {
         textColor: PALETTE.ink,
       }
     ),
-     new Button(
+    new Button(
       readButtonM.x + readButtonM.w / 2,
       readButtonM.y + readButtonM.h / 2,
       readButtonM.w,
@@ -1100,44 +1314,44 @@ function createWordButtons() {
       }
     ),
     new Button(
-        textArea.x + 10,
-        textArea.y + 10,
-        50,
-        50,
-        "+",
-        () => {
-          readingTextSize = min(readingTextSize + 2, MAX_TEXT_SIZE);
-  textLayout = [];
-        },
-        {
-          textSize: 14,
-          bgColor: [0, 0, 0, 0],
-          hoverColor: [0, 0, 0, 0],
-          strokeWeight: 0,
-          textColor: [255, 255, 255, 80],
-          mode: CENTER,
-        }
-      ),
-      new Button(
-        textArea.x + textArea.w - 10,
-        textArea.y + 10,
-        50,
-        50,
-        "-",
-        () => {
-            readingTextSize = max(readingTextSize - 2, MIN_TEXT_SIZE);
-  textLayout = [];
-        },
-        {
-          textSize: 14,
-          bgColor: [0, 0, 0, 0],
-          hoverColor: [0, 0, 0, 0],
-          strokeWeight: 0,
-          textColor: [255, 255, 255, 80],
-          mode: CENTER,
-          textAlign: [CENTER, CENTER],
-        }
-      ),
+      textArea.x + 10,
+      textArea.y + 10,
+      50,
+      50,
+      "+",
+      () => {
+        readingTextSize = min(readingTextSize + 2, MAX_TEXT_SIZE);
+        textLayout = [];
+      },
+      {
+        textSize: 14,
+        bgColor: [0, 0, 0, 0],
+        hoverColor: [0, 0, 0, 0],
+        strokeWeight: 0,
+        textColor: [255, 255, 255, 80],
+        mode: CENTER,
+      }
+    ),
+    new Button(
+      textArea.x + textArea.w - 10,
+      textArea.y + 10,
+      50,
+      50,
+      "-",
+      () => {
+        readingTextSize = max(readingTextSize - 2, MIN_TEXT_SIZE);
+        textLayout = [];
+      },
+      {
+        textSize: 14,
+        bgColor: [0, 0, 0, 0],
+        hoverColor: [0, 0, 0, 0],
+        strokeWeight: 0,
+        textColor: [255, 255, 255, 80],
+        mode: CENTER,
+        textAlign: [CENTER, CENTER],
+      }
+    ),
   ];
 
   let buttonGap = 10;
@@ -1157,7 +1371,7 @@ function createWordButtons() {
     // would this word overflow the row?
     if (
       rowWidth + buttonW + (currentRow.length > 0 ? buttonGap : 0) >
-        maxRowWidth &&
+      maxRowWidth &&
       currentRow.length > 0
     ) {
       rows.push(currentRow);
@@ -1199,7 +1413,7 @@ function createWordButtons() {
             strokeWeight: 1,
             textColor: PALETTE.ink,
             behaviors: [
-              springX({targetX: x + buttonW / 2, speed: 0.6, damping: 0.90})
+              springX({ targetX: x + buttonW / 2, speed: 0.6, damping: 0.90 })
             ]
           }
         )
@@ -1409,7 +1623,7 @@ function updateLayout(list) {
   memorizeScrollY = min(0, visibleHeight - contentHeight);
 }
 
-function clickMemorize() {}
+function clickMemorize() { }
 
 //=====================================================================
 //                   Favorites Page & Verse Storage
@@ -1553,6 +1767,11 @@ function bookNumberToName(num) {
 
 function bookNameToNumber(name) {
   return nameToNumber[name.toLowerCase()];
+}
+
+
+function bookNameToShortName(name) {
+  return shortNameByBook.get(name); // undefined if not found
 }
 
 //=====================================================================
