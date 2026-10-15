@@ -20,7 +20,7 @@ const PALETTE = {
   border: [255, 255, 255, 55],
   divider: [255, 255, 255, 40],
   tabFill: [255, 255, 255, 40],
-  tabSelectedFill: [255, 255, 255, 120],
+  tabSelectedFill: [255, 255, 255, 80],
 
   // radial menu glass
   menuBg: [255, 255, 255, 20],
@@ -54,7 +54,6 @@ let cBook = "Genesis",
 let verseY;
 let offsetY = 0;
 let dragging = true;
-let tabHeight = 32;
 let tabs = [];
 let currentTabIndex = 0;
 
@@ -442,7 +441,7 @@ function switchPage(newState) {
           row.action,
           {
             mode: CORNER,
-            cornerRadius: 6,
+            cornerRadius: [6,6,0,0],
             strokeWeight: 0,
             bgColor: PALETTE.surface,
             hoverColor: PALETTE.surfaceRaised,
@@ -717,15 +716,15 @@ function switchPage(newState) {
     ];
     // In switchPage("Reading"), add these to the buttons array:
     const vcBtnStyle = {
-      mode: CENTER, cornerRadius: 16, textSize: 18,
+      mode: CENTER, cornerRadius: 10, textSize: 12,
       bgColor: PALETTE.surface, hoverColor: PALETTE.accentSoft,
       stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.accent,
     };
     const vcY = height - 74 - 8 - 16;          // 8px above the panel's bottom edge
     const vcRight = width - 28 - 12 - 16;      // 12px in from the panel's right edge
     buttons.push(
-      new Button(vcRight - 80, vcY, 32, 32, "\u2212", () => changeVC(-1), vcBtnStyle),
-      new Button(vcRight, vcY, 32, 32, "+", () => changeVC(1), vcBtnStyle)
+      new Button(vcRight - 40, vcY, 20, 20, "\u2212", () => changeVC(-1), vcBtnStyle),
+      new Button(vcRight, vcY, 20, 20, "+", () => changeVC(1), vcBtnStyle)
     );
   } else if (newState === "Memorize") {
     state = newState;
@@ -864,7 +863,7 @@ function drawHome() {
 
   // Dividers under the nav list (editorial list, not boxed cards)
   stroke(...PALETTE.border);
-  strokeWeight(1);
+  strokeWeight(3);
   for (const row of homeLayout.nav) {
     line(
       homeLayout.navX,
@@ -1028,7 +1027,7 @@ function drawReading() {
   textFont("Helvetica, Arial, sans-serif");
   textSize(14);
   textAlign(CENTER, CENTER);
-  text(VC, width - 28 - 12 - 16 - 40, height - 74 - 8 - 16);
+  text(VC, width - 28 - 12 - 16 - 20, height - 74 - 8 - 16);
   pop();
 }
 
@@ -1051,10 +1050,11 @@ function clickReading() {
 
 let tabStart = 40;
 let minTabWidth = 10;
+let tabHeight = 20;
 let tabWidth;
 
 function displayTabs() {
-
+  if(tabs.length <= 1) return;
   push();
   rectMode(CORNER)
   textFont("Helvetica, Arial, sans-serif");
@@ -1069,10 +1069,13 @@ function displayTabs() {
       fill(...PALETTE.tabFill);
     }
     stroke(...PALETTE.border);
-    rect(tabStart + i * tabWidth, 74, tabWidth, tabHeight, 10, 10, 0, 0);
+    rect(tabStart + i * tabWidth, 74, tabWidth, tabHeight, 5, 5, 0, 0);
     noStroke();
     fill(...PALETTE.reference);
     let label = `${bookNameToShortName(tabs[i].book)} ${tabs[i].chap}: ${tabs[i].verse}`
+    if(tabs[i].vc > 1){
+      label += ` - ${tabs[i].verse + tabs[i].vc - 1}`
+    }
     if (textWidth(label) > tabWidth) {
       label = `${bookNameToShortName(tabs[i].book)} ${tabs[i].chap}`
     }
@@ -1125,7 +1128,7 @@ function displayVerse(b, c, sv, lv = sv) {
   stroke(...PALETTE.border);
   strokeWeight(1);
   fill(...PALETTE.surface);
-  rect(28, 74 + tabHeight, width - 56, height - 74 - 74 - tabHeight, 14);
+  rect(28, 74 + tabHeight, width - 56, height - 74 - 74 - tabHeight, 10);
   pop();
 
   noStroke();
@@ -1146,7 +1149,7 @@ function displayVerse(b, c, sv, lv = sv) {
   textSize(readingTextSize);
   drawingContext.save(); // save context state
   drawingContext.beginPath();
-  drawingContext.rect(28, 74, width - 56, height - 74 - 74, 14); // x, y, w, h
+  drawingContext.rect(28, 74 + tabHeight, width - 56, height - 74 - 74 - tabHeight, 14); // x, y, w, h
   drawingContext.clip();
   text(verseText, width / 2, verseY, 0.8 * width);
   drawingContext.restore();

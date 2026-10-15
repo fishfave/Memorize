@@ -72,7 +72,12 @@ class Button {
     stroke(...this.style.stroke);
 
     rectMode(mode);
-    rect(this.x, this.y, this.w, this.h, this.style.cornerRadius);
+    if (typeof (this.style.cornerRadius) != "number") {
+      rect(this.x, this.y, this.w, this.h, ...this.style.cornerRadius);
+    } else {
+      rect(this.x, this.y, this.w, this.h, this.style.cornerRadius);
+    }
+
 
     fill(...this.style.textColor);
     noStroke();
@@ -104,7 +109,7 @@ class Button {
 
 //Behavior Factories
 
-function wobble({ speed = 0.1, distance = 5} = {}) {
+function wobble({ speed = 0.1, distance = 5 } = {}) {
   return function attachTo(btn) {
     let angle = 0;
     return function runWobble() {
@@ -119,7 +124,7 @@ function springX({ targetX, speed = 0.1, damping = 0.8 } = {}) {
     let vx = 0;
     return function runSpringX() {
       const dx = targetX - btn.x;
-      if(abs(dx) > 0.1 || abs(vx) > 0.1) {
+      if (abs(dx) > 0.1 || abs(vx) > 0.1) {
         vx += dx * speed;
         vx *= damping;
         btn.x += vx;
