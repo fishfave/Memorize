@@ -441,7 +441,7 @@ function switchPage(newState) {
           row.action,
           {
             mode: CORNER,
-            cornerRadius: [6,6,0,0],
+            cornerRadius: [6, 6, 0, 0],
             strokeWeight: 0,
             bgColor: PALETTE.surface,
             hoverColor: PALETTE.surfaceRaised,
@@ -538,7 +538,7 @@ function switchPage(newState) {
         }
       ),
     ];
-  } else if (newState === "Reading") {
+  } else if (newState === "Reading") {         // ================= READING =====================
     verseY = height / 2;
     state = newState;
     const index = tabs.findIndex(o =>
@@ -557,16 +557,61 @@ function switchPage(newState) {
     }
 
     buttons = [
-      new Button(
-        64,
-        26,
-        96,
-        34,
-        "\u2039 Home",
-        () => {
-          switchPage("Home");
-        },
+      //Home button
+      new Button(14, 14, 80, 32, "\u2039 Home", () => {
+        switchPage("Home");
+      },
         {
+          cornerRadius: 4,
+          textSize: 14,
+          bgColor: PALETTE.surface,
+          hoverColor: PALETTE.surfaceRaised,
+          stroke: PALETTE.border,
+          strokeWeight: 1,
+          textColor: PALETTE.ink,
+          mode: CORNER,
+        }
+      ),
+      //Drop button
+      new Button(width - 14-40, 14, 40, 32, "☰", () => {
+        toggleDrop();
+      },
+        {
+          textSize: 36,
+          bgColor: [0,0],
+          hoverColor: [0,0],
+          strokeWeight: 0,
+          textColor: PALETTE.ink,
+          mode: CORNER,
+        }
+      ),
+      //Save button
+      new Button(width - readingDropWidth - 12 + readingDropWidth/2, readingDropY + 24, 80, 24, "Save", () => {
+        saveCurrentVerse();
+        let sb = getButtonById("save");
+        sb.label = "Saved";
+        sb.style.bgColor = PALETTE.accentSoft;
+        sb.style.hoverColor = PALETTE.accentSoft;
+        sb.style.textColor = PALETTE.ink;
+      },
+        {
+          id: "save",
+          cornerRadius: 8,
+          textSize: 14,
+          bgColor: PALETTE.surface,
+          hoverColor: PALETTE.surfaceRaised,
+          stroke: PALETTE.border,
+          strokeWeight: 1,
+          textColor: PALETTE.ink,
+          mode: CENTER,
+        }
+      ),
+      //Tab button
+      new Button(width - readingDropWidth - 12 + readingDropWidth/2, readingDropY + 60, 80, 24, "Close Tab", () => {
+        closeTab(currentTabIndex);
+      },
+        {
+          id: "closeTab",
           cornerRadius: 8,
           textSize: 14,
           bgColor: PALETTE.surface,
@@ -576,57 +621,10 @@ function switchPage(newState) {
           textColor: PALETTE.ink,
         }
       ),
-      new Button(
-        width - 40,
-        20,
-        76,
-        25,
-        "Save",
-        () => {
-          saveCurrentVerse();
-          buttons[1].label = "Saved";
-          buttons[1].style.bgColor = PALETTE.accentSoft;
-          buttons[1].style.hoverColor = PALETTE.accentSoft;
-          buttons[1].style.textColor = PALETTE.ink;
-        },
-        {
-          cornerRadius: 8,
-          textSize: 14,
-          bgColor: PALETTE.surface,
-          hoverColor: PALETTE.surfaceRaised,
-          stroke: PALETTE.border,
-          strokeWeight: 1,
-          textColor: PALETTE.ink,
-        }
-      ),
-      new Button(
-        width - 40,
-        56,
-        76,
-        25,
-        "Close Tab",
-        () => {
-          closeTab(currentTabIndex);
-        },
-        {
-          cornerRadius: 8,
-          textSize: 14,
-          bgColor: PALETTE.surface,
-          hoverColor: PALETTE.surfaceRaised,
-          stroke: PALETTE.border,
-          strokeWeight: 1,
-          textColor: PALETTE.ink,
-        }
-      ),
-      new Button(
-        46,
-        height - 44,
-        44,
-        44,
-        "\u2039",
-        () => {
-          goToPrevVerse();
-        },
+      //Back verse
+      new Button(46, height - 44, 44, 44, "\u2039", () => {
+        goToPrevVerse();
+      },
         {
           cornerRadius: 22,
           textSize: 20,
@@ -637,15 +635,10 @@ function switchPage(newState) {
           textColor: PALETTE.accent,
         }
       ),
-      new Button(
-        width - 46,
-        height - 44,
-        44,
-        44,
-        "\u203A",
-        () => {
-          goToNextVerse();
-        },
+      //next verse
+      new Button(width - 46, height - 44, 44, 44, "\u203A", () => {
+        goToNextVerse();
+      },
         {
           cornerRadius: 22,
           textSize: 20,
@@ -656,15 +649,10 @@ function switchPage(newState) {
           textColor: PALETTE.accent,
         }
       ),
-      new Button(
-        width / 2,
-        height - 44,
-        98,
-        44,
-        "Memorize",
-        () => {
-          switchPage("Memorize");
-        },
+      //Memorize button
+      new Button(width / 2, height - 44, 98, 44, "Memorize", () => {
+        switchPage("Memorize");
+      },
         {
           cornerRadius: 8,
           textSize: 14,
@@ -676,16 +664,12 @@ function switchPage(newState) {
           mode: CENTER,
         }
       ),
-      new Button(
-        28 + 25,
-        74 + 25 + tabHeight,
-        50,
-        50,
-        "+",
-        () => {
-          readingTextSize = min(readingTextSize + 2, MAX_TEXT_SIZE);
-        },
+      //font up
+      new Button(28 + 25, 74 + 25 + tabHeight, 50, 50, "+", () => {
+        readingTextSize = min(readingTextSize + 2, MAX_TEXT_SIZE);
+      },
         {
+          id: "fontUp",
           textSize: 14,
           bgColor: [0, 0, 0, 0],
           hoverColor: [0, 0, 0, 0],
@@ -694,16 +678,12 @@ function switchPage(newState) {
           mode: CENTER,
         }
       ),
-      new Button(
-        width - 28 - 25,
-        74 + 25 + tabHeight,
-        50,
-        50,
-        "-",
-        () => {
-          readingTextSize = max(readingTextSize - 2, MIN_TEXT_SIZE);
-        },
+      // font down
+      new Button(width - 28 - 25, 74 + 25 + tabHeight, 50, 50, "-", () => {
+        readingTextSize = max(readingTextSize - 2, MIN_TEXT_SIZE);
+      },
         {
+          id: "fontDown",
           textSize: 14,
           bgColor: [0, 0, 0, 0],
           hoverColor: [0, 0, 0, 0],
@@ -714,18 +694,24 @@ function switchPage(newState) {
         }
       ),
     ];
-    // In switchPage("Reading"), add these to the buttons array:
-    const vcBtnStyle = {
+    //Verse Count buttons
+    const vcY = readingDropY + 120;          
+    const vcCenter = width - readingDropWidth / 2 - 12;      
+    buttons.push(
+      new Button(vcCenter - 30, vcY, 20, 20, "\u2212", () => changeVC(-1), {
       mode: CENTER, cornerRadius: 10, textSize: 12,
       bgColor: PALETTE.surface, hoverColor: PALETTE.accentSoft,
       stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.accent,
-    };
-    const vcY = height - 74 - 8 - 16;          // 8px above the panel's bottom edge
-    const vcRight = width - 28 - 12 - 16;      // 12px in from the panel's right edge
-    buttons.push(
-      new Button(vcRight - 40, vcY, 20, 20, "\u2212", () => changeVC(-1), vcBtnStyle),
-      new Button(vcRight, vcY, 20, 20, "+", () => changeVC(1), vcBtnStyle)
+      id:"vcDown"
+    }),
+      new Button(vcCenter + 30, vcY, 20, 20, "+", () => changeVC(1), {
+      mode: CENTER, cornerRadius: 10, textSize: 12,
+      bgColor: PALETTE.surface, hoverColor: PALETTE.accentSoft,
+      stroke: PALETTE.border, strokeWeight: 1, textColor: PALETTE.accent,
+      id: "vcUp"
+    })
     );
+    closeDrop();
   } else if (newState === "Memorize") {
     state = newState;
     startMemorize();
@@ -1020,31 +1006,40 @@ function menuBack() {
 function drawReading() {
   displayVerse(cBook, cChap, cVerse, cVerse + VC - 1);
   displayTabs();
-    // VC label, centered between the − and + buttons
+  if (readingDropOpen) {
+    displayDropMenu();
+  }
+  // VC label, centered between the − and + buttons
   push();
-  noStroke();
-  fill(...PALETTE.ink);
-  textFont("Helvetica, Arial, sans-serif");
-  textSize(14);
-  textAlign(CENTER, CENTER);
-  text(VC, width - 28 - 12 - 16 - 20, height - 74 - 8 - 16);
+  // noStroke();
+  // fill(...PALETTE.ink);
+  // textFont("Helvetica, Arial, sans-serif");
+  // textSize(14);
+  // textAlign(CENTER, CENTER);
+  // text(VC, width - 28 - 12 - 16 - 20, height - 74 - 8 - 16);
   pop();
 }
 
 function clickReading() {
-  if (mouseY > 74 && mouseY < 74 + tabHeight && mouseX > 40 && mouseX < width - 40) {
-    currentTabIndex = floor((mouseX - 40) / (width - 80) * tabs.length);
-    if (tabs[currentTabIndex]) {
-      setCurrentVerse(tabs[currentTabIndex]);
-      verseY = height / 2
-    }
-    
-  }
+  if (readingDropOpen) {
 
-  if (mouseY < 74 && mouseX > 165 && mouseX < width - 121) {
-    switchPage("Selecting")
-    selecting = "End Verse"
-    menuBack();
+  } else {
+    //tab click
+    if (mouseY > 74 && mouseY < 74 + tabHeight && mouseX > 40 && mouseX < width - 40) {
+      currentTabIndex = floor((mouseX - 40) / (width - 80) * tabs.length);
+      if (tabs[currentTabIndex]) {
+        setCurrentVerse(tabs[currentTabIndex]);
+        verseY = height / 2
+      }
+
+    }
+
+    //ref click
+    if (mouseY < 74 && mouseX > 165 && mouseX < width - 121) {
+      switchPage("Selecting")
+      selecting = "End Verse"
+      menuBack();
+    }
   }
 }
 
@@ -1054,7 +1049,7 @@ let tabHeight = 20;
 let tabWidth;
 
 function displayTabs() {
-  if(tabs.length <= 1) return;
+  if (tabs.length <= 1) return;
   push();
   rectMode(CORNER)
   textFont("Helvetica, Arial, sans-serif");
@@ -1073,7 +1068,7 @@ function displayTabs() {
     noStroke();
     fill(...PALETTE.reference);
     let label = `${bookNameToShortName(tabs[i].book)} ${tabs[i].chap}: ${tabs[i].verse}`
-    if(tabs[i].vc > 1){
+    if (tabs[i].vc > 1) {
       label += ` - ${tabs[i].verse + tabs[i].vc - 1}`
     }
     if (textWidth(label) > tabWidth) {
@@ -1106,6 +1101,57 @@ function closeTab() {
   if (tabs.length === 0) {
     switchPage("Home");
   }
+}
+
+//HAMBORGER
+
+let readingDropOpen = false;
+const readingDropWidth = 150;
+const readingDropY = 50;
+
+function openDrop() {
+  readingDropOpen = true;
+  getButtonById("save").visable = true;
+  getButtonById("closeTab").visable = true;
+  getButtonById("vcUp").visable = true;
+  getButtonById("vcDown").visable = true;
+  getButtonById("fontDown").visable = false;
+  getButtonById("fontUp").visable = false;
+
+}
+
+function closeDrop() {
+  readingDropOpen = false;
+  getButtonById("save").visable = false;
+  getButtonById("closeTab").visable = false;
+  getButtonById("vcUp").visable = false;
+  getButtonById("vcDown").visable = false;
+  getButtonById("fontDown").visable = true;
+  getButtonById("fontUp").visable = true;
+}
+
+function toggleDrop(){
+  if(readingDropOpen){
+    closeDrop();
+  } else{
+    openDrop();
+  }
+}
+
+function displayDropMenu() {
+  push();
+  rectMode(CORNER);
+  stroke(...PALETTE.border);
+  strokeWeight(2);
+  fill(17, 100, 137, 200);
+  rect(width - readingDropWidth - 12, readingDropY, readingDropWidth, 250,4);
+  noStroke();
+  fill(...PALETTE.ink)
+  textAlign(CENTER,CENTER);
+  textSize(16);
+  text("Verse Count:",width - readingDropWidth / 2 - 12,readingDropY+96)
+  text(VC,width - readingDropWidth / 2 - 12,readingDropY+120)
+  pop();
 }
 
 function displayVerse(b, c, sv, lv = sv) {

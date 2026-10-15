@@ -21,6 +21,15 @@ function _buttonBounds(x, y, w, h, mode) {
   return { left: x - w / 2, top: y - h / 2, right: x + w / 2, bottom: y + h / 2, cx: x, cy: y };
 }
 
+function getButtonById(id){
+  for(let button of buttons){
+    if(button.style.id === id){
+      return button;
+    }
+  }
+  return -1;
+}
+
 class Button {
   constructor(x, y, w, h, label, onClick, options = {}) {
     this.x = x; this.y = y;
@@ -28,6 +37,7 @@ class Button {
     this.label = label;
     this.onClick = onClick;
     this.hovered = false;
+    this.visable = true;
 
     this.default = {
       textSize: 20,
@@ -61,6 +71,7 @@ class Button {
   }
 
   draw() {
+    if(!this.visable) return;
     push();
     const mode = this.style.mode || _buttonMode;
     const align = this.style.textAlign || _buttonTextAlign;
@@ -103,7 +114,7 @@ class Button {
   }
 
   handleClick(px = mouseX, py = mouseY) {
-    if (this.contains(px, py)) this.onClick();
+    if (this.contains(px, py) && this.visable) this.onClick();
   }
 }
 
